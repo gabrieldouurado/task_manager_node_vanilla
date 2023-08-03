@@ -9,7 +9,7 @@ export const routes = [
     method: 'GET',
     path: buildRoutePath('/tasks'),
     handler: (req, res) => {
-      
+
       const search = req.query ?? null
 
       const tasks = database.select('tasks', search)
@@ -22,6 +22,10 @@ export const routes = [
     path: buildRoutePath('/tasks'),
     handler: (req, res) => {
       const { title, description } = req.body
+
+      if (!title || !description) {
+        return res.writeHead(400).end(JSON.stringify({ error: "Missing title or description!" }))
+      }
 
       const user = {
         id: randomUUID(),
@@ -42,17 +46,30 @@ export const routes = [
     path: buildRoutePath('/tasks/:id'),
     handler: (req, res) => {
       const { id } = req.params
-      const body = req.body
+      const { title, description } = req.body
 
       const task = database.findById('tasks', id)
 
-      if(!task) {
-        return res.writeHead(400).end(JSON.stringify({error: "Task not found!"}))
+      if (!task) {
+        return res.writeHead(400).end(JSON.stringify({ error: "Task not found!" }))
+      }
+
+      if (title) {
+        Object.assign(task, {
+          ...task,
+          title
+        })
+      }
+
+      if (description) {
+        Object.assign(task, {
+          ...task,
+          description
+        })
       }
 
       database.update('tasks', id, {
         ...task,
-        ...body,
         updated_at: new Date()
       })
 
@@ -66,8 +83,8 @@ export const routes = [
       const { id } = req.params
 
       const task = database.findById('tasks', id)
-      if(!task) {
-        return res.writeHead(400).end(JSON.stringify({error: "Task not found!"}))
+      if (!task) {
+        return res.writeHead(400).end(JSON.stringify({ error: "Task not found!" }))
       }
 
       database.delete('tasks', id)
@@ -82,10 +99,10 @@ export const routes = [
       const { id } = req.params
 
       const task = database.findById('tasks', id)
-      if(!task) {
-        return res.writeHead(400).end(JSON.stringify({error: "Task not found!"}))
+      if (!task) {
+        return res.writeHead(400).end(JSON.stringify({ error: "Task not found!" }))
       }
-      
+
       let taskCompleted = task.completed_at ? null : new Date()
 
       database.update('tasks', id, {
